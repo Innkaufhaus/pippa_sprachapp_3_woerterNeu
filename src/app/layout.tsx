@@ -1,7 +1,10 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
+import { Lexend } from 'next/font/google'
 
-const inter = Inter({ subsets: ['latin'] })
+const lexend = Lexend({
+  subsets: ['latin'],
+  display: 'swap',
+})
 
 export const metadata = {
   title: 'Sprachapp - 3 Wörter',
@@ -14,14 +17,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="de">
-      <head>
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" 
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-['Lexend'] antialiased">
+    <html lang="de" className={lexend.className}>
+      <body className="antialiased">
         {children}
       </body>
     </html>
