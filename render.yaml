@@ -3,9 +3,13 @@ services:
     name: pippa-sprachapp-3woerter
     env: node
     plan: free
-    buildCommand: "npm install && npm run build"
-    startCommand: "npm start"
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PORT
-        fromDatabase: false
-        value: "10000"
+        value: "3000"
+    healthCheckPath: /
+    autoDeploy: true
+    nodeVersion: 18
