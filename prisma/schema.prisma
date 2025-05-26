@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Sentence {
+  id        Int      @id @default(autoincrement())
+  keyword   String
+  sentence  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settings {
+  id          Int      @id @default(autoincrement())
+  speechRate  Float    @default(0.5)
+  speechPitch Float    @default(1.2)
+  updatedAt   DateTime @updatedAt
+}

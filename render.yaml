@@ -3,13 +3,31 @@ services:
     name: pippa-sprachapp-3woerter
     env: node
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: |
+      npm install
+      npx prisma generate
+      npx prisma db push
+      npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: "3000"
-    healthCheckPath: /
-    autoDeploy: true
-    nodeVersion: 18
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pippa_db
+          property: connectionString
+      - key: POSTGRES_PRISMA_URL
+        fromDatabase:
+          name: pippa_db
+          property: connectionString
+      - key: POSTGRES_URL_NON_POOLING
+        fromDatabase:
+          name: pippa_db
+          property: connectionString
+
+databases:
+  - name: pippa_db
+    plan: free
+    ipAllowList: []

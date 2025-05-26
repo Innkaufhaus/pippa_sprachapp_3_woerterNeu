@@ -1,148 +1,148 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 
 type SentencePair = {
+  id: number;
   keyword: string;
   sentence: string;
 }
 
-export default function LearningPage() {
-  const [sentences, setSentences] = useState<SentencePair[]>([])
+type Settings = {
+  id: number;
+  speechRate: number;
+  speechPitch: number;
+}
+
+export default function HomePage() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [sentences, setSentences] = useState<SentencePair[]>([])
+  const [settings, setSettings] = useState<Settings>({
+    id: 0,
+    speechRate: 0.5,
+    speechPitch: 1.2
+  })
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentPair, setCurrentPair] = useState<SentencePair | null>(null)
-  const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
 
   useEffect(() => {
-    // Load sentences from localStorage
-    const storedSentences = localStorage.getItem('sentences')
-    if (storedSentences) {
-      const parsed = JSON.parse(storedSentences)
-      setSentences(parsed)
-      if (parsed.length > 0) {
-        setCurrentPair(parsed[0])
-      }
-    }
-    
-    speechSynthesisRef.current = window.speechSynthesis
-    return () => {
-      speechSynthesisRef.current?.cancel()
-    }
+    fetchSentences()
+    fetchSettings()
   }, [])
 
+  const fetchSentences = async () => {
+    try {
+      const response = await fetch('/api/sentences')
+      const data = await response.json()
+      setSentences(data)
+    } catch (error) {
+      console.error('Failed to fetch sentences:', error)
+    }
+  }
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings')
+      const data = await response.json()
+      setSettings(data)
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    }
+  }
+
   const speak = (text: string) => {
-    if (!speechSynthesisRef.current) {
-      alert("Sprachsynthese wird von Ihrem Browser nicht unterstützt.")
-      return
-    }
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel()
+      setIsPlaying(true)
 
-    // Cancel any ongoing speech
-    speechSynthesisRef.current.cancel()
-    setIsPlaying(true)
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'de-DE'
+      utterance.rate = settings.speechRate
+      utterance.pitch = settings.speechPitch
 
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'de-DE' // Set German language
-    
-    // Get settings from localStorage
-    const storedSettings = localStorage.getItem('settings')
-    if (storedSettings) {
-      const settings = JSON.parse(storedSettings)
-      utterance.rate = settings.speechRate || 0.8
-      utterance.pitch = settings.speechPitch || 1.2
-    }
+      utterance.onend = () => {
+        setIsPlaying(false)
+      }
 
-    utterance.onend = () => {
-      setIsPlaying(false)
-    }
+      utterance.onerror = () => {
+        setIsPlaying(false)
+      }
 
-    utterance.onerror = () => {
-      setIsPlaying(false)
-    }
-
-    speechSynthesisRef.current.speak(utterance)
-  }
-
-  const speakWord = () => {
-    if (currentPair) {
-      speak(currentPair.keyword)
+      window.speechSynthesis.speak(utterance)
     }
   }
 
-  const speakSentence = () => {
-    if (currentPair) {
-      speak(currentPair.sentence)
+  const nextWord = () => {
+    if (sentences.length > 0) {
+      const nextIndex = (currentIndex + 1) % sentences.length
+      setCurrentIndex(nextIndex)
+      // Automatically speak the new word
+      setTimeout(() => {
+        speak(sentences[nextIndex].keyword)
+      }, 300)
     }
   }
 
-  const showNextPair = () => {
-    if (sentences.length === 0) return
-    
-    const nextIndex = (currentIndex + 1) % sentences.length
-    setCurrentIndex(nextIndex)
-    setCurrentPair(sentences[nextIndex])
-    // Automatically speak the new word
-    setTimeout(() => {
-      speak(sentences[nextIndex].keyword)
-    }, 300)
-  }
+  const currentSentence = sentences[currentIndex]
 
   if (sentences.length === 0) {
     return (
-      <div className="min-h-screen bg-black p-8 flex flex-col items-center justify-center">
-        <h1 className="text-white text-6xl md:text-8xl text-center mb-12 font-bold">
-          Keine Sätze verfügbar.
-        </h1>
-        <Link href="/admin">
-          <Button className="text-2xl px-8 py-6 rounded-xl bg-white text-black hover:bg-gray-200">
-            Zum Admin-Bereich
-          </Button>
-        </Link>
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8">
+        <Card className="w-full max-w-2xl p-8 bg-white text-black text-center rounded-xl">
+          <h1 className="text-3xl font-bold mb-6">Keine Sätze verfügbar</h1>
+          <Link href="/admin">
+            <Button className="text-xl px-6 py-4">
+              Zum Admin-Bereich
+            </Button>
+          </Link>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black p-8 flex flex-col items-center justify-center">
-      {/* Admin Link - Smaller since it's for parents */}
-      <Link 
-        href="/admin"
-        className="absolute top-4 right-4 text-white hover:underline text-lg"
-      >
-        Admin
-      </Link>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8">
+      {/* Admin Link */}
+      <div className="absolute top-4 right-4">
+        <Link href="/admin">
+          <Button variant="outline" className="text-xl">
+            Admin
+          </Button>
+        </Link>
+      </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="w-full max-w-4xl space-y-12">
         {/* Keyword Display */}
-        <div 
-          onClick={speakWord}
-          className="w-full bg-white text-black p-12 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors text-center min-h-[200px] flex items-center justify-center"
+        <Card 
+          onClick={() => !isPlaying && speak(currentSentence.keyword)}
+          className="w-full p-12 bg-white text-black text-center rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
         >
-          <span className="text-7xl md:text-8xl font-bold">
-            {currentPair?.keyword || "Start"}
-          </span>
-        </div>
+          <h1 className="text-7xl md:text-8xl font-bold">
+            {currentSentence.keyword}
+          </h1>
+        </Card>
 
         {/* Complete Sentence Button */}
-        <button
-          onClick={speakSentence}
+        <Button
+          onClick={() => !isPlaying && speak(currentSentence.sentence)}
           disabled={isPlaying}
-          className="w-full bg-white text-black p-8 rounded-2xl text-4xl md:text-5xl font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-8 text-4xl md:text-5xl font-bold"
         >
           Kompletter Satz
-        </button>
+        </Button>
 
-        {/* Next Button */}
-        <button
-          onClick={showNextPair}
+        {/* Next Word Button */}
+        <Button
+          onClick={nextWord}
           disabled={isPlaying}
-          className="w-full bg-white text-black p-8 rounded-2xl text-4xl md:text-5xl font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-8 text-4xl md:text-5xl font-bold"
         >
           Nächstes Wort
-        </button>
+        </Button>
       </div>
     </div>
   )

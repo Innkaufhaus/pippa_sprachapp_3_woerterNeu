@@ -7,54 +7,108 @@ import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 
 type SentencePair = {
+  id: number;
   keyword: string;
   sentence: string;
+}
+
+type Settings = {
+  id: number;
+  speechRate: number;
+  speechPitch: number;
 }
 
 export default function AdminPage() {
   const [keyword, setKeyword] = useState('')
   const [sentence, setSentence] = useState('')
   const [sentences, setSentences] = useState<SentencePair[]>([])
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<Settings>({
+    id: 0,
     speechRate: 0.5,
     speechPitch: 1.2
   })
 
+  // Fetch sentences and settings on component mount
   useEffect(() => {
-    // Load sentences from localStorage
-    const storedSentences = localStorage.getItem('sentences')
-    if (storedSentences) {
-      setSentences(JSON.parse(storedSentences))
-    }
-
-    // Load settings from localStorage
-    const storedSettings = localStorage.getItem('settings')
-    if (storedSettings) {
-      setSettings(JSON.parse(storedSettings))
-    }
+    fetchSentences()
+    fetchSettings()
   }, [])
 
-  const addSentence = () => {
+  const fetchSentences = async () => {
+    try {
+      const response = await fetch('/api/sentences')
+      const data = await response.json()
+      setSentences(data)
+    } catch (error) {
+      console.error('Failed to fetch sentences:', error)
+    }
+  }
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings')
+      const data = await response.json()
+      setSettings(data)
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    }
+  }
+
+  const addSentence = async () => {
     if (!keyword.trim() || !sentence.trim()) return
 
-    const newSentences = [...sentences, { keyword, sentence }]
-    setSentences(newSentences)
-    localStorage.setItem('sentences', JSON.stringify(newSentences))
-    
-    // Clear inputs
-    setKeyword('')
-    setSentence('')
+    try {
+      await fetch('/api/sentences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keyword, sentence }),
+      })
+      
+      // Refresh sentences list
+      fetchSentences()
+      
+      // Clear inputs
+      setKeyword('')
+      setSentence('')
+    } catch (error) {
+      console.error('Failed to add sentence:', error)
+    }
   }
 
-  const deleteSentence = (index: number) => {
-    const newSentences = sentences.filter((_, i) => i !== index)
-    setSentences(newSentences)
-    localStorage.setItem('sentences', JSON.stringify(newSentences))
+  const deleteSentence = async (id: number) => {
+    try {
+      await fetch('/api/sentences', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      })
+      
+      // Refresh sentences list
+      fetchSentences()
+    } catch (error) {
+      console.error('Failed to delete sentence:', error)
+    }
   }
 
-  const updateSettings = (newSettings: typeof settings) => {
-    setSettings(newSettings)
-    localStorage.setItem('settings', JSON.stringify(newSettings))
+  const updateSettings = async (newSettings: Partial<Settings>) => {
+    try {
+      const updatedSettings = { ...settings, ...newSettings }
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedSettings),
+      })
+      
+      setSettings(updatedSettings)
+    } catch (error) {
+      console.error('Failed to update settings:', error)
+    }
   }
 
   return (
@@ -116,7 +170,6 @@ export default function AdminPage() {
                 step="0.1"
                 value={settings.speechRate}
                 onChange={(e) => updateSettings({
-                  ...settings,
                   speechRate: parseFloat(e.target.value)
                 })}
                 className="w-full"
@@ -133,7 +186,6 @@ export default function AdminPage() {
                 step="0.1"
                 value={settings.speechPitch}
                 onChange={(e) => updateSettings({
-                  ...settings,
                   speechPitch: parseFloat(e.target.value)
                 })}
                 className="w-full"
@@ -146,9 +198,9 @@ export default function AdminPage() {
         <Card className="p-6 bg-white text-black rounded-xl">
           <h2 className="text-2xl font-bold mb-4">Gespeicherte Sätze</h2>
           <div className="space-y-4">
-            {sentences.map((pair, index) => (
+            {sentences.map((pair) => (
               <div 
-                key={index}
+                key={pair.id}
                 className="flex justify-between items-center p-4 bg-gray-100 rounded-lg"
               >
                 <div>
@@ -156,7 +208,7 @@ export default function AdminPage() {
                   <p className="text-lg">{pair.sentence}</p>
                 </div>
                 <Button
-                  onClick={() => deleteSentence(index)}
+                  onClick={() => deleteSentence(pair.id)}
                   variant="destructive"
                   className="ml-4"
                 >
