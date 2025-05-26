@@ -3,34 +3,34 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 8000",
+    "dev": "next dev -p ${PORT:-8000}",
     "build": "next build",
     "start": "next start -p $PORT"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
     "@radix-ui/react-slot": "^1.2.3",
-    "@types/react-dom": "^19.1.5",
     "@vercel/postgres": "^0.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
-    "next": "^15.3.2",
+    "next": "^14.0.4",
     "prisma": "^6.8.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tailwind-merge": "^3.3.0"
   },
   "engines": {
     "node": ">=16.8.0"
   },
   "devDependencies": {
-    "@types/node": "^22.15.21",
-    "@types/react": "^19.1.5",
+    "@types/node": "^20.10.6",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.14",
-    "critters": "^0.0.25",
+    "critters": "^0.0.20",
     "postcss": "^8.4.14",
     "tailwindcss": "^3.3.0",
-    "typescript": "5.8.3"
+    "typescript": "^5.3.3"
   }
 }

@@ -1,0 +1,16 @@
+-- CreateTable
+CREATE TABLE "Sentence" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "keyword" TEXT NOT NULL,
+    "sentence" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "Settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "speechRate" REAL NOT NULL DEFAULT 0.5,
+    "speechPitch" REAL NOT NULL DEFAULT 1.2,
+    "updatedAt" DATETIME NOT NULL
+);

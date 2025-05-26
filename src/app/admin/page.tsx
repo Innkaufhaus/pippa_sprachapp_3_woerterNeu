@@ -27,8 +27,9 @@ export default function AdminPage() {
     speechRate: 0.5,
     speechPitch: 1.2
   })
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Fetch sentences and settings on component mount
   useEffect(() => {
     fetchSentences()
     fetchSettings()
@@ -36,77 +37,118 @@ export default function AdminPage() {
 
   const fetchSentences = async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       const response = await fetch('/api/sentences')
+      if (!response.ok) {
+        throw new Error('Failed to fetch sentences')
+      }
       const data = await response.json()
       setSentences(data)
     } catch (error) {
+      setError('Failed to fetch sentences. Please try again.')
       console.error('Failed to fetch sentences:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const fetchSettings = async () => {
     try {
+      setError(null)
       const response = await fetch('/api/settings')
+      if (!response.ok) {
+        throw new Error('Failed to fetch settings')
+      }
       const data = await response.json()
       setSettings(data)
     } catch (error) {
+      setError('Failed to fetch settings. Please try again.')
       console.error('Failed to fetch settings:', error)
     }
   }
 
   const addSentence = async () => {
-    if (!keyword.trim() || !sentence.trim()) return
+    if (!keyword.trim() || !sentence.trim()) {
+      setError('Bitte füllen Sie beide Felder aus.')
+      return
+    }
 
     try {
-      await fetch('/api/sentences', {
+      setIsLoading(true)
+      setError(null)
+      const response = await fetch('/api/sentences', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ keyword, sentence }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to add sentence')
+      }
       
       // Refresh sentences list
-      fetchSentences()
+      await fetchSentences()
       
       // Clear inputs
       setKeyword('')
       setSentence('')
     } catch (error) {
+      setError('Failed to add sentence. Please try again.')
       console.error('Failed to add sentence:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const deleteSentence = async (id: number) => {
     try {
-      await fetch('/api/sentences', {
+      setIsLoading(true)
+      setError(null)
+      const response = await fetch('/api/sentences', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ id }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete sentence')
+      }
       
       // Refresh sentences list
-      fetchSentences()
+      await fetchSentences()
     } catch (error) {
+      setError('Failed to delete sentence. Please try again.')
       console.error('Failed to delete sentence:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const updateSettings = async (newSettings: Partial<Settings>) => {
     try {
+      setError(null)
       const updatedSettings = { ...settings, ...newSettings }
-      await fetch('/api/settings', {
+      const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updatedSettings),
       })
-      
-      setSettings(updatedSettings)
+
+      if (!response.ok) {
+        throw new Error('Failed to update settings')
+      }
+
+      const data = await response.json()
+      setSettings(data)
     } catch (error) {
+      setError('Failed to update settings. Please try again.')
       console.error('Failed to update settings:', error)
     }
   }
@@ -124,6 +166,13 @@ export default function AdminPage() {
           </Link>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <Card className="p-4 bg-red-50 border-red-200 text-red-700">
+            {error}
+          </Card>
+        )}
+
         {/* Add New Sentence */}
         <Card className="p-6 bg-white text-black rounded-xl">
           <h2 className="text-2xl font-bold mb-4">Neuen Satz hinzufügen</h2>
@@ -135,6 +184,7 @@ export default function AdminPage() {
                 onChange={(e) => setKeyword(e.target.value)}
                 className="text-xl p-4 h-auto"
                 placeholder="z.B. Katze"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -144,13 +194,15 @@ export default function AdminPage() {
                 onChange={(e) => setSentence(e.target.value)}
                 className="text-xl p-4 h-auto"
                 placeholder="z.B. Die Katze schläft"
+                disabled={isLoading}
               />
             </div>
             <Button 
               onClick={addSentence}
               className="w-full text-xl p-6 bg-black text-white hover:bg-gray-800"
+              disabled={isLoading}
             >
-              Satz hinzufügen
+              {isLoading ? 'Wird hinzugefügt...' : 'Satz hinzufügen'}
             </Button>
           </div>
         </Card>
@@ -173,6 +225,7 @@ export default function AdminPage() {
                   speechRate: parseFloat(e.target.value)
                 })}
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -189,6 +242,7 @@ export default function AdminPage() {
                   speechPitch: parseFloat(e.target.value)
                 })}
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -211,14 +265,20 @@ export default function AdminPage() {
                   onClick={() => deleteSentence(pair.id)}
                   variant="destructive"
                   className="ml-4"
+                  disabled={isLoading}
                 >
-                  Löschen
+                  {isLoading ? '...' : 'Löschen'}
                 </Button>
               </div>
             ))}
-            {sentences.length === 0 && (
+            {sentences.length === 0 && !isLoading && (
               <p className="text-lg text-gray-500 text-center">
                 Noch keine Sätze hinzugefügt
+              </p>
+            )}
+            {isLoading && (
+              <p className="text-lg text-gray-500 text-center">
+                Lädt...
               </p>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { headers } from 'next/headers'
 
 export async function GET() {
   try {
@@ -15,30 +16,58 @@ export async function GET() {
       })
     }
     
-    return NextResponse.json(settings)
+    return new NextResponse(JSON.stringify(settings), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
+    return new NextResponse(JSON.stringify({ error: 'Failed to fetch settings' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { speechRate, speechPitch } = await request.json()
+    const body = await request.json()
+    const { speechRate, speechPitch } = body
+    
     let settings = await prisma.settings.findFirst()
 
     if (settings) {
       settings = await prisma.settings.update({
         where: { id: settings.id },
-        data: { speechRate, speechPitch }
+        data: { 
+          speechRate: Number(speechRate), 
+          speechPitch: Number(speechPitch) 
+        }
       })
     } else {
       settings = await prisma.settings.create({
-        data: { speechRate, speechPitch }
+        data: { 
+          speechRate: Number(speechRate), 
+          speechPitch: Number(speechPitch) 
+        }
       })
     }
 
-    return NextResponse.json(settings)
+    return new NextResponse(JSON.stringify(settings), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
+    return new NextResponse(JSON.stringify({ error: 'Failed to update settings' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
   }
 }
