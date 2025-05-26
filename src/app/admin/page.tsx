@@ -16,7 +16,7 @@ export default function AdminPage() {
   const [sentence, setSentence] = useState('')
   const [sentences, setSentences] = useState<SentencePair[]>([])
   const [settings, setSettings] = useState({
-    speechRate: 0.8,
+    speechRate: 0.5,
     speechPitch: 1.2
   })
 
@@ -111,7 +111,7 @@ export default function AdminPage() {
               </label>
               <input
                 type="range"
-                min="0.5"
+                min="0.2"
                 max="1.5"
                 step="0.1"
                 value={settings.speechRate}
