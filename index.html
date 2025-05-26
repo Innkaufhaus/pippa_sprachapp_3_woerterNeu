@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Learning App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: #f0f9ff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .word {
+            font-size: 4rem;
+            margin: 30px 0;
+            color: #2563eb;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sentence {
+            font-size: 3rem;
+            margin: 30px 0;
+            color: #1e40af;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 2rem;
+            border-radius: 15px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: 'Comic Neue', cursive;
+            transition: transform 0.2s;
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        .admin-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #64748b;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .word {
+                font-size: 3rem;
+            }
+            .sentence {
+                font-size: 2.5rem;
+            }
+            .button {
+                font-size: 1.5rem;
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="admin.html" class="admin-link">Admin</a>
+    <div class="container">
+        <div class="word" id="word">Click Start</div>
+        <div class="sentence" id="sentence"></div>
+        <button class="button" id="startBtn">Start</button>
+        <button class="button" id="repeatBtn" style="display: none;">Repeat</button>
+    </div>
+
+    <script>
+        const wordDisplay = document.getElementById('word');
+        const sentenceDisplay = document.getElementById('sentence');
+        const startBtn = document.getElementById('startBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+
+        // Get sentences from localStorage or use default
+        function getSentences() {
+            const stored = localStorage.getItem('sentences');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+            return [{
+                keyword: 'hungry',
+                sentence: 'I am hungry'
+            }];
+        }
+
+        let currentPair = null;
+        let currentIndex = 0;
+
+        // Get settings from localStorage
+        function getSettings() {
+            const stored = localStorage.getItem('settings');
+            return stored ? JSON.parse(stored) : {
+                wordDelay: 10,
+                repeatCount: 1
+            };
+        }
+
+        function speak(text, repeatCount = 1) {
+            const settings = getSettings();
+            
+            // Clear any existing speech
+            speechSynthesis.cancel();
+
+            // Repeat the speech the specified number of times with separate utterances
+            for (let i = 0; i < repeatCount; i++) {
+                setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = settings.speechRate;
+                    utterance.pitch = settings.speechPitch;
+                    speechSynthesis.speak(utterance);
+                }, i * 2500); // 2.5 second gap between repeats
+            }
+        }
+
+        function showNextPair() {
+            const sentences = getSentences();
+            if (sentences.length === 0) return;
+
+            currentIndex = (currentIndex + 1) % sentences.length;
+            currentPair = sentences[currentIndex];
+            
+            const settings = getSettings();
+            
+            // Show and speak keyword
+            wordDisplay.textContent = currentPair.keyword;
+            sentenceDisplay.textContent = '';
+            speak(currentPair.keyword, settings.repeatCount);
+            
+            // After specified delay, show and speak sentence
+            setTimeout(() => {
+                sentenceDisplay.textContent = currentPair.sentence;
+                speak(currentPair.sentence, settings.repeatCount);
+                repeatBtn.style.display = 'inline-block';
+            }, settings.wordDelay * 1000);
+        }
+
+        startBtn.addEventListener('click', () => {
+            startBtn.textContent = 'Next';
+            showNextPair();
+        });
+
+        repeatBtn.addEventListener('click', () => {
+            if (currentPair) {
+                const settings = getSettings();
+                speak(currentPair.sentence, settings.repeatCount);
+            }
+        });
+    </script>
+</body>
+</html>

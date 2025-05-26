@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: pippa-sprachapp-3woerter
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    envVars:
+      - key: PORT
+        fromDatabase: false
+        value: "10000"
