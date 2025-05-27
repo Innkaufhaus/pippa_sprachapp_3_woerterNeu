@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p ${PORT:-8000}",
     "build": "next build",
-    "start": "next start -p $PORT"
+    "start": "node .next/standalone/server.js"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
