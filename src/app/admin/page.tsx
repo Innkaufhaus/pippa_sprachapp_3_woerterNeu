@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
+import { logger } from '@/utils/logger'
 
 type SentencePair = {
   id: number;
@@ -45,9 +46,10 @@ export default function AdminPage() {
       }
       const data = await response.json()
       setSentences(data)
+      logger.info('Successfully fetched sentences:', data)
     } catch (error) {
       setError('Failed to fetch sentences. Please try again.')
-      console.error('Failed to fetch sentences:', error)
+      logger.error('Failed to fetch sentences:', error)
     } finally {
       setIsLoading(false)
     }
@@ -62,9 +64,10 @@ export default function AdminPage() {
       }
       const data = await response.json()
       setSettings(data)
+      logger.info('Successfully fetched settings:', data)
     } catch (error) {
       setError('Failed to fetch settings. Please try again.')
-      console.error('Failed to fetch settings:', error)
+      logger.error('Failed to fetch settings:', error)
     }
   }
 
@@ -77,6 +80,7 @@ export default function AdminPage() {
     try {
       setIsLoading(true)
       setError(null)
+      logger.info('Adding new sentence:', { keyword, sentence })
       const response = await fetch('/api/sentences', {
         method: 'POST',
         headers: {
@@ -95,9 +99,10 @@ export default function AdminPage() {
       // Clear inputs
       setKeyword('')
       setSentence('')
+      logger.info('Successfully added new sentence')
     } catch (error) {
       setError('Failed to add sentence. Please try again.')
-      console.error('Failed to add sentence:', error)
+      logger.error('Failed to add sentence:', error)
     } finally {
       setIsLoading(false)
     }
@@ -107,6 +112,7 @@ export default function AdminPage() {
     try {
       setIsLoading(true)
       setError(null)
+      logger.info('Deleting sentence:', { id })
       const response = await fetch('/api/sentences', {
         method: 'DELETE',
         headers: {
@@ -121,9 +127,10 @@ export default function AdminPage() {
       
       // Refresh sentences list
       await fetchSentences()
+      logger.info('Successfully deleted sentence:', { id })
     } catch (error) {
       setError('Failed to delete sentence. Please try again.')
-      console.error('Failed to delete sentence:', error)
+      logger.error('Failed to delete sentence:', error)
     } finally {
       setIsLoading(false)
     }
@@ -133,6 +140,7 @@ export default function AdminPage() {
     try {
       setError(null)
       const updatedSettings = { ...settings, ...newSettings }
+      logger.info('Updating settings:', updatedSettings)
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: {
@@ -147,9 +155,10 @@ export default function AdminPage() {
 
       const data = await response.json()
       setSettings(data)
+      logger.info('Successfully updated settings:', data)
     } catch (error) {
       setError('Failed to update settings. Please try again.')
-      console.error('Failed to update settings:', error)
+      logger.error('Failed to update settings:', error)
     }
   }
 
